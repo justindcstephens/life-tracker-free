@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Life Tracker</title>
+    <!-- Include jsPDF library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
@@ -215,65 +216,81 @@
         let contactData = {};
         let willData = {};
 
+        // Base URL for API calls
+        const BASE_URL = 'https://life-tracker-free.onrender.com';
+
         async function signup() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const response = await fetch('https://life-tracker-free.onrender.com/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const result = await response.json();
-            if (response.ok) {
-                token = result.token;
-                loadData();
-                alert('Sign-up successful! You are now logged in.');
-            } else {
-                alert(result.message);
+            try {
+                const response = await fetch(`${BASE_URL}/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    token = result.token;
+                    loadData();
+                    alert('Sign-up successful! You are now logged in.');
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert('Error during sign-up: ' + error.message);
             }
         }
 
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const response = await fetch('https://life-tracker-free.onrender.com/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const result = await response.json();
-            if (response.ok) {
-                token = result.token;
-                loadData();
-                alert('Login successful!');
-            } else {
-                alert(result.message);
+            try {
+                const response = await fetch(`${BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    token = result.token;
+                    loadData();
+                    alert('Login successful!');
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert('Error during login: ' + error.message);
             }
         }
 
         async function loadData() {
             if (!token) return;
-            const response = await fetch('https://life-tracker-free.onrender.com/data', {
-                headers: { 'Authorization': token }
-            });
-            const data = await response.json();
-            equipmentData = data.equipment || {};
-            propertyData = data.property || {};
-            debtData = data.debt || {};
-            assetData = data.assets || {};
-            stockData = data.stocks || {};
-            insuranceData = data.insurances || {};
-            contactData = data.contacts || {};
-            willData = data.wills || {};
-            displayEquipment();
-            displayProperty();
-            displayDebt();
-            displayAssets();
-            displayStocks();
-            displayInsurances();
-            displayContacts();
-            displayWills();
-            calculateTotals();
+            try {
+                const response = await fetch(`${BASE_URL}/data`, {
+                    headers: { 'Authorization': token }
+                });
+                if (!response.ok) throw new Error('Failed to load data');
+                const data = await response.json();
+                equipmentData = data.equipment || {};
+                propertyData = data.property || {};
+                debtData = data.debt || {};
+                assetData = data.assets || {};
+                stockData = data.stocks || {};
+                insuranceData = data.insurances || {};
+                contactData = data.contacts || {};
+                willData = data.wills || {};
+                displayEquipment();
+                displayProperty();
+                displayDebt();
+                displayAssets();
+                displayStocks();
+                displayInsurances();
+                displayContacts();
+                displayWills();
+                calculateTotals();
+            } catch (error) {
+                alert('Error loading data: ' + error.message);
+            }
         }
 
         async function saveData() {
@@ -281,13 +298,30 @@
                 alert('Please log in to save your data.');
                 return;
             }
-            const data = { equipment: equipmentData, property: propertyData, debt: debtData, assets: assetData, stocks: stockData, insurances: insuranceData, contacts: contactData, wills: willData };
-            await fetch(https://life-tracker-free.onrender.com/data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                body: JSON.stringify(data)
-            });
-            loadData();
+            const data = {
+                equipment: equipmentData,
+                property: propertyData,
+                debt: debtData,
+                assets: assetData,
+                stocks: stockData,
+                insurances: insuranceData,
+                contacts: contactData,
+                wills: willData
+            };
+            try {
+                const response = await fetch(`${BASE_URL}/data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) throw new Error('Failed to save data');
+                loadData();
+            } catch (error) {
+                alert('Error saving data: ' + error.message);
+            }
         }
 
         function calculateTotals() {
@@ -763,11 +797,9 @@
         function displayEquipment() {
             const display = document.getElementById('equipmentDisplay');
             display.innerHTML = '';
-
             for (const [name, data] of Object.entries(equipmentData)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'equipment-item';
-
                 let maintenanceHtml = '';
                 (data.maintenance || []).forEach((entry, index) => {
                     maintenanceHtml += `
@@ -779,11 +811,9 @@
                         </div>
                     `;
                 });
-
                 const make = data.make || 'N/A';
                 const model = data.model || 'N/A';
                 const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
-
                 itemDiv.innerHTML = `
                     <h3>${name}</h3>
                     <p>Make: ${make}</p>
@@ -803,7 +833,6 @@
         function displayProperty() {
             const display = document.getElementById('propertyDisplay');
             display.innerHTML = '';
-
             for (const [name, data] of Object.entries(propertyData)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'property-item';
@@ -822,7 +851,6 @@
         function displayDebt() {
             const display = document.getElementById('debtDisplay');
             display.innerHTML = '';
-
             for (const [name, data] of Object.entries(debtData)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'debt-item';
@@ -841,7 +869,6 @@
         function displayAssets() {
             const display = document.getElementById('assetDisplay');
             display.innerHTML = '';
-
             for (const [name, data] of Object.entries(assetData)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'asset-item';
@@ -860,7 +887,6 @@
         function displayStocks() {
             const display = document.getElementById('stockDisplay');
             display.innerHTML = '';
-
             for (const [name, data] of Object.entries(stockData)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'stock-item';
@@ -882,7 +908,6 @@
         function displayInsurances() {
             const display = document.getElementById('insuranceDisplay');
             display.innerHTML = '';
-
             for (const [name, data] of Object.entries(insuranceData)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'insurance-item';
@@ -908,15 +933,11 @@
         function displayContacts() {
             const display = document.getElementById('contactDisplay');
             display.innerHTML = '';
-
             const categories = {};
             for (const [key, data] of Object.entries(contactData)) {
-                if (!categories[data.category]) {
-                    categories[data.category] = [];
-                }
+                if (!categories[data.category]) categories[data.category] = [];
                 categories[data.category].push({ key, ...data });
             }
-
             for (const [category, contacts] of Object.entries(categories)) {
                 const categoryDiv = document.createElement('div');
                 categoryDiv.innerHTML = `<h3>${category}</h3>`;
@@ -939,7 +960,6 @@
         function displayWills() {
             const display = document.getElementById('willDisplay');
             display.innerHTML = '';
-
             for (const [title, data] of Object.entries(willData)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'will-item';
@@ -1105,13 +1125,11 @@
                 if (!contactCategories[data.category]) contactCategories[data.category] = [];
                 contactCategories[data.category].push(data);
             }
-
             for (const [category, contacts] of Object.entries(contactCategories)) {
                 if (yOffset > 280) { doc.addPage(); yOffset = 10; }
                 doc.setFontSize(14);
                 doc.text(category, 10, yOffset);
                 yOffset += 7;
-
                 for (const contact of contacts) {
                     if (yOffset > 280) { doc.addPage(); yOffset = 10; }
                     doc.setFontSize(12);
