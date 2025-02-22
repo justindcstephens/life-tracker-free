@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1, h2 { text-align: center; }
+        .logo { max-width: 150px; margin-bottom: 20px; }
+        .totals-section, .equipment-list, .property-list, .debt-list, .asset-list, .stock-list, .insurance-list, .contact-list, .will-list {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-section { padding: 10px; }
+        input, textarea, button, select { display: block; width: 100%; margin: 10px 0; padding: 8px; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        .equipment-item, .property-item, .debt-item, .asset-item, .stock-item, .insurance-item, .contact-item, .will-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .maintenance-entry { margin: 5px 0; padding: 5px; background-color: #f9f9f9; display: flex; align-items: center; }
+        .maintenance-entry img { max-width: 100px; margin-left: 10px; }
+        .action-btn { display: inline-block; width: auto; padding: 5px 10px; margin: 5px 5px 0 0; background-color: #008CBA; }
+        .action-btn.delete { background-color: #f44336; }
+        .action-btn:hover { background-color: #006d9e; }
+        .action-btn.delete:hover { background-color: #d32f2f; }
+        #exportBtn { background-color: #ff9800; margin: 20px auto; width: 200px; }
+        #exportBtn:hover { background-color: #e68900; }
+        .totals-section p { font-size: 18px; font-weight: bold; }
+        details { margin-bottom: 10px; }
+        summary { cursor: pointer; font-weight: bold; padding: 5px; background-color: #f0f0f0; }
+        #authSection { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <img src="logo.png" alt="Life Tracker Logo" class="logo">
+    <h1>Life Tracker</h1>
+
+    <div id="authSection">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="signup()">Sign Up</button>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div class="totals-section">
+        <p>Total Assets Value: $<span id="totalAssetsValue">0.00</span></p>
+        <p>Total Debt Value: $<span id="totalDebtValue">0.00</span></p>
+        <p>Net Worth: $<span id="netWorthValue">0.00</span></p>
+    </div>
+
+    <div class="equipment-list">
+        <h2>Equipment List</h2>
+        <div id="equipmentDisplay"></div>
+        <details>
+            <summary>Add Equipment</summary>
+            <div class="form-section">
+                <input type="text" id="equipmentName" placeholder="Equipment Name (e.g., Furnace)">
+                <input type="text" id="equipmentMake" placeholder="Make (e.g., Trane)">
+                <input type="text" id="equipmentModel" placeholder="Model (e.g., XV95)">
+                <input type="number" id="equipmentValue" placeholder="Value (e.g., 5000)" step="0.01">
+                <button onclick="addEquipment()">Add Equipment</button>
+            </div>
+        </details>
+        <details>
+            <summary>Log Maintenance</summary>
+            <div class="form-section">
+                <input type="text" id="maintenanceEquipment" placeholder="Equipment Name">
+                <input type="date" id="maintenanceDate">
+                <textarea id="maintenanceDetails" placeholder="Maintenance Details (e.g., Filter replaced)"></textarea>
+                <input type="file" id="maintenancePhoto" accept="image/*">
+                <button onclick="logMaintenance()">Log Maintenance</button>
+            </div>
+        </details>
+    </div>
+
+    <div class="property-list">
+        <h2>Personal Property List</h2>
+        <div id="propertyDisplay"></div>
+        <details>
+            <summary>Add Personal Property</summary>
+            <div class="form-section">
+                <input type="text" id="propertyName" placeholder="Property Name (e.g., TV)">
+                <textarea id="propertyDescription" placeholder="Description (e.g., 55-inch OLED)"></textarea>
+                <input type="number" id="propertyValue" placeholder="Value (e.g., 1200)" step="0.01">
+                <button onclick="addProperty()">Add Property</button>
+            </div>
+        </details>
+    </div>
+
+    <div class="debt-list">
+        <h2>Debt List</h2>
+        <div id="debtDisplay"></div>
+        <details>
+            <summary>Add Debt</summary>
+            <div class="form-section">
+                <input type="text" id="debtName" placeholder="Debt Name (e.g., Mortgage)">
+                <textarea id="debtDescription" placeholder="Description (e.g., 30-year fixed)"></textarea>
+                <input type="number" id="debtValue" placeholder="Amount Owed (e.g., 250000)" step="0.01">
+                <button onclick="addDebt()">Add Debt</button>
+            </div>
+        </details>
+    </div>
+
+    <div class="asset-list">
+        <h2>Asset List</h2>
+        <div id="assetDisplay"></div>
+        <details>
+            <summary>Add Asset</summary>
+            <div class="form-section">
+                <input type="text" id="assetName" placeholder="Asset Name (e.g., Savings Account)">
+                <textarea id="assetDescription" placeholder="Description (e.g., Emergency Fund)"></textarea>
+                <input type="number" id="assetValue" placeholder="Value (e.g., 5000)" step="0.01">
+                <button onclick="addAsset()">Add Asset</button>
+            </div>
+        </details>
+    </div>
+
+    <div class="stock-list">
+        <h2>Stock List</h2>
+        <div id="stockDisplay"></div>
+        <details>
+            <summary>Add Stock</summary>
+            <div class="form-section">
+                <input type="text" id="stockName" placeholder="Stock Name (e.g., AAPL)">
+                <input type="number" id="stockShares" placeholder="Shares (e.g., 10)" step="0.01">
+                <input type="number" id="stockPrice" placeholder="Price per Share (e.g., 150)" step="0.01">
+                <button onclick="addStock()">Add Stock</button>
+            </div>
+        </details>
+    </div>
+
+    <div class="insurance-list">
+        <h2>Life Insurances</h2>
+        <div id="insuranceDisplay"></div>
+        <details>
+            <summary>Add Life Insurance</summary>
+            <div class="form-section">
+                <input type="text" id="insuranceName" placeholder="Insurance Name (e.g., Life Insurance)">
+                <input type="number" id="insuranceMonthly" placeholder="Monthly Investment (e.g., 200)" step="0.01">
+                <input type="number" id="insuranceCashValue" placeholder="Cash Value (e.g., 10000)" step="0.01">
+                <input type="number" id="insuranceLoaned" placeholder="Loaned Amount (e.g., 2000)" step="0.01">
+                <input type="number" id="insuranceAvailable" placeholder="Available Loan Amount (e.g., 8000)" step="0.01">
+                <input type="number" id="insuranceDeathBenefit" placeholder="Death Benefit (e.g., 50000)" step="0.01">
+                <button onclick="addInsurance()">Add Insurance</button>
+            </div>
+        </details>
+    </div>
+
+    <div class="contact-list">
+        <h2>Important Contacts</h2>
+        <div id="contactDisplay"></div>
+        <details>
+            <summary>Add Important Contact</summary>
+            <div class="form-section">
+                <select id="contactCategory">
+                    <option value="Plumber">Plumber</option>
+                    <option value="Electrician">Electrician</option>
+                    <option value="HVAC">HVAC</option>
+                    <option value="Roofing Contractor">Roofing Contractor</option>
+                    <option value="Tree Service">Tree Service</option>
+                    <option value="Pest Control">Pest Control</option>
+                    <option value="Close Family Members">Close Family Members</option>
+                    <option value="Trusted Friends">Trusted Friends</option>
+                    <option value="Health Care Provider">Health Care Provider</option>
+                    <option value="Lawyer">Lawyer</option>
+                    <option value="Life Insurance Broker">Life Insurance Broker</option>
+                    <option value="Business Partners">Business Partners</option>
+                    <option value="Finance Advisors">Finance Advisors</option>
+                    <option value="Accountants">Accountants</option>
+                    <option value="Trusted Neighbors">Trusted Neighbors</option>
+                </select>
+                <input type="text" id="contactName" placeholder="Name (e.g., John Doe)">
+                <input type="text" id="contactInfo" placeholder="Contact Info (e.g., 555-123-4567)">
+                <textarea id="contactDescription" placeholder="Description (e.g., Reliable plumber for emergencies)"></textarea>
+                <button onclick="addContact()">Add Contact</button>
+            </div>
+        </details>
+    </div>
+
+    <div class="will-list">
+        <h2>A Brief Will and Desires Upon Death</h2>
+        <div id="willDisplay"></div>
+        <details>
+            <summary>Add Brief Will and Desires Upon Death</summary>
+            <div class="form-section">
+                <input type="text" id="willTitle" placeholder="Title (e.g., Last Wishes)">
+                <textarea id="willDescription" placeholder="Description (e.g., Distribute estate equally to children, simple funeral)"></textarea>
+                <button onclick="addWill()">Add Will Entry</button>
+            </div>
+        </details>
+    </div>
+
+    <button id="exportBtn" onclick="exportToPDF()">Export to PDF</button>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        let token = null;
+        let equipmentData = {};
+        let propertyData = {};
+        let debtData = {};
+        let assetData = {};
+        let stockData = {};
+        let insuranceData = {};
+        let contactData = {};
+        let willData = {};
+
+        async function signup() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const response = await fetch('http://localhost:3000/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                token = result.token;
+                loadData();
+                alert('Sign-up successful! You are now logged in.');
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const response = await fetch('http://localhost:3000/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                token = result.token;
+                loadData();
+                alert('Login successful!');
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function loadData() {
+            if (!token) return;
+            const response = await fetch('http://localhost:3000/data', {
+                headers: { 'Authorization': token }
+            });
+            const data = await response.json();
+            equipmentData = data.equipment || {};
+            propertyData = data.property || {};
+            debtData = data.debt || {};
+            assetData = data.assets || {};
+            stockData = data.stocks || {};
+            insuranceData = data.insurances || {};
+            contactData = data.contacts || {};
+            willData = data.wills || {};
+            displayEquipment();
+            displayProperty();
+            displayDebt();
+            displayAssets();
+            displayStocks();
+            displayInsurances();
+            displayContacts();
+            displayWills();
+            calculateTotals();
+        }
+
+        async function saveData() {
+            if (!token) {
+                alert('Please log in to save your data.');
+                return;
+            }
+            const data = { equipment: equipmentData, property: propertyData, debt: debtData, assets: assetData, stocks: stockData, insurances: insuranceData, contacts: contactData, wills: willData };
+            await fetch('http://localhost:3000/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify(data)
+            });
+            loadData();
+        }
+
+        function calculateTotals() {
+            let totalAssets = 0;
+            for (const data of Object.values(assetData)) totalAssets += data.value || 0;
+            for (const data of Object.values(stockData)) totalAssets += data.totalValue || 0;
+            for (const data of Object.values(propertyData)) totalAssets += data.value || 0;
+            for (const data of Object.values(equipmentData)) totalAssets += data.value || 0;
+            for (const data of Object.values(insuranceData)) totalAssets += data.cashValue || 0;
+
+            let totalDebt = 0;
+            for (const data of Object.values(debtData)) totalDebt += data.value || 0;
+            for (const data of Object.values(insuranceData)) totalDebt += data.loaned || 0;
+
+            const netWorth = totalAssets - totalDebt;
+
+            document.getElementById('totalAssetsValue').textContent = totalAssets.toFixed(2);
+            document.getElementById('totalDebtValue').textContent = totalDebt.toFixed(2);
+            document.getElementById('netWorthValue').textContent = netWorth.toFixed(2);
+            return { totalAssets, totalDebt, netWorth };
+        }
+
+        function addEquipment() {
+            const name = document.getElementById('equipmentName').value.trim();
+            const make = document.getElementById('equipmentMake').value.trim();
+            const model = document.getElementById('equipmentModel').value.trim();
+            const value = parseFloat(document.getElementById('equipmentValue').value);
+
+            if (!name || !make || !model || isNaN(value)) {
+                alert('Please fill in all equipment fields with valid data.');
+                return;
+            }
+
+            if (!equipmentData[name]) {
+                equipmentData[name] = { make, model, value, maintenance: [] };
+                document.getElementById('equipmentName').value = '';
+                document.getElementById('equipmentMake').value = '';
+                document.getElementById('equipmentModel').value = '';
+                document.getElementById('equipmentValue').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique equipment name.');
+            }
+        }
+
+        function logMaintenance() {
+            const name = document.getElementById('maintenanceEquipment').value.trim();
+            const date = document.getElementById('maintenanceDate').value;
+            const details = document.getElementById('maintenanceDetails').value.trim();
+            const photoInput = document.getElementById('maintenancePhoto');
+            const file = photoInput.files[0];
+
+            if (!name || !date || !details) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            if (!equipmentData[name]) {
+                alert('Equipment not found. Add it first.');
+                return;
+            }
+
+            const maintenanceEntry = { date, details };
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    maintenanceEntry.photo = e.target.result;
+                    equipmentData[name].maintenance.push(maintenanceEntry);
+                    resetMaintenanceForm();
+                    saveData();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                equipmentData[name].maintenance.push(maintenanceEntry);
+                resetMaintenanceForm();
+                saveData();
+            }
+        }
+
+        function resetMaintenanceForm() {
+            document.getElementById('maintenanceEquipment').value = '';
+            document.getElementById('maintenanceDate').value = '';
+            document.getElementById('maintenanceDetails').value = '';
+            document.getElementById('maintenancePhoto').value = '';
+        }
+
+        function addProperty() {
+            const name = document.getElementById('propertyName').value.trim();
+            const description = document.getElementById('propertyDescription').value.trim();
+            const value = parseFloat(document.getElementById('propertyValue').value || 0);
+
+            if (!name || !description || isNaN(value)) {
+                alert('Please fill in all property fields with valid data.');
+                return;
+            }
+
+            if (!propertyData[name]) {
+                propertyData[name] = { description, value };
+                document.getElementById('propertyName').value = '';
+                document.getElementById('propertyDescription').value = '';
+                document.getElementById('propertyValue').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique property name.');
+            }
+        }
+
+        function addDebt() {
+            const name = document.getElementById('debtName').value.trim();
+            const description = document.getElementById('debtDescription').value.trim();
+            const value = parseFloat(document.getElementById('debtValue').value || 0);
+
+            if (!name || !description || isNaN(value)) {
+                alert('Please fill in all debt fields with valid data.');
+                return;
+            }
+
+            if (!debtData[name]) {
+                debtData[name] = { description, value };
+                document.getElementById('debtName').value = '';
+                document.getElementById('debtDescription').value = '';
+                document.getElementById('debtValue').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique debt name.');
+            }
+        }
+
+        function addAsset() {
+            const name = document.getElementById('assetName').value.trim();
+            const description = document.getElementById('assetDescription').value.trim();
+            const value = parseFloat(document.getElementById('assetValue').value || 0);
+
+            if (!name || !description || isNaN(value)) {
+                alert('Please fill in all asset fields with valid data.');
+                return;
+            }
+
+            if (!assetData[name]) {
+                assetData[name] = { description, value };
+                document.getElementById('assetName').value = '';
+                document.getElementById('assetDescription').value = '';
+                document.getElementById('assetValue').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique asset name.');
+            }
+        }
+
+        function addStock() {
+            const name = document.getElementById('stockName').value.trim();
+            const shares = parseFloat(document.getElementById('stockShares').value || 0);
+            const price = parseFloat(document.getElementById('stockPrice').value || 0);
+
+            if (!name || isNaN(shares) || isNaN(price) || shares < 0 || price < 0) {
+                alert('Please fill in all stock fields with valid non-negative numbers.');
+                return;
+            }
+
+            if (!stockData[name]) {
+                stockData[name] = { shares, price, totalValue: shares * price };
+                document.getElementById('stockName').value = '';
+                document.getElementById('stockShares').value = '';
+                document.getElementById('stockPrice').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique stock name.');
+            }
+        }
+
+        function addInsurance() {
+            const name = document.getElementById('insuranceName').value.trim();
+            const monthly = parseFloat(document.getElementById('insuranceMonthly').value || 0);
+            const cashValue = parseFloat(document.getElementById('insuranceCashValue').value || 0);
+            const loaned = parseFloat(document.getElementById('insuranceLoaned').value || 0);
+            const available = parseFloat(document.getElementById('insuranceAvailable').value || 0);
+            const deathBenefit = parseFloat(document.getElementById('insuranceDeathBenefit').value || 0);
+
+            if (!name) {
+                alert('Please provide an insurance name.');
+                return;
+            }
+            if (isNaN(monthly) || isNaN(cashValue) || isNaN(loaned) || isNaN(available) || isNaN(deathBenefit)) {
+                alert('Please fill in all numeric fields with valid numbers.');
+                return;
+            }
+
+            if (!(name in insuranceData)) {
+                insuranceData[name] = { monthly, cashValue, loaned, available, deathBenefit };
+                document.getElementById('insuranceName').value = '';
+                document.getElementById('insuranceMonthly').value = '';
+                document.getElementById('insuranceCashValue').value = '';
+                document.getElementById('insuranceLoaned').value = '';
+                document.getElementById('insuranceAvailable').value = '';
+                document.getElementById('insuranceDeathBenefit').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique insurance name.');
+            }
+        }
+
+        function addContact() {
+            const category = document.getElementById('contactCategory').value;
+            const name = document.getElementById('contactName').value.trim();
+            const contactInfo = document.getElementById('contactInfo').value.trim();
+            const description = document.getElementById('contactDescription').value.trim();
+
+            if (!name || !contactInfo || !description) {
+                alert('Please fill in all contact fields with valid data.');
+                return;
+            }
+
+            const key = `${category}-${name}`;
+            if (!contactData[key]) {
+                contactData[key] = { category, name, contactInfo, description };
+                document.getElementById('contactName').value = '';
+                document.getElementById('contactInfo').value = '';
+                document.getElementById('contactDescription').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique contact name for this category.');
+            }
+        }
+
+        function addWill() {
+            const title = document.getElementById('willTitle').value.trim();
+            const description = document.getElementById('willDescription').value.trim();
+
+            if (!title || !description) {
+                alert('Please fill in both title and description for your will entry.');
+                return;
+            }
+
+            if (!willData[title]) {
+                willData[title] = { description };
+                document.getElementById('willTitle').value = '';
+                document.getElementById('willDescription').value = '';
+                saveData();
+            } else {
+                alert('Please enter a unique title for this will entry.');
+            }
+        }
+
+        function editEquipment(oldName) {
+            const current = equipmentData[oldName];
+            const newName = prompt('Enter new equipment name:', oldName);
+            const newMake = prompt('Edit make:', current.make || '');
+            const newModel = prompt('Edit model:', current.model || '');
+            const newValue = parseFloat(prompt('Edit value:', current.value || ''));
+
+            if (newName && newMake && newModel && !isNaN(newValue) && 
+                (newName !== oldName || newMake !== (current.make || '') || newModel !== (current.model || '') || newValue !== (current.value || 0))) {
+                if (!equipmentData[newName] || newName === oldName) {
+                    delete equipmentData[oldName];
+                    equipmentData[newName] = { make: newMake, model: newModel, value: newValue, maintenance: current.maintenance };
+                    saveData();
+                } else {
+                    alert('That name is already in use.');
+                }
+            }
+        }
+
+        function deleteEquipment(name) {
+            if (confirm(`Are you sure you want to delete "${name}" and all its maintenance logs?`)) {
+                delete equipmentData[name];
+                saveData();
+            }
+        }
+
+        function editMaintenance(equipmentName, index) {
+            const current = equipmentData[equipmentName].maintenance[index];
+            const newDate = prompt('Edit maintenance date:', current.date);
+            const newDetails = prompt('Edit maintenance details:', current.details);
+
+            if (newDate && newDetails) {
+                equipmentData[equipmentName].maintenance[index] = {
+                    date: newDate,
+                    details: newDetails,
+                    photo: current.photo
+                };
+                saveData();
+            }
+        }
+
+        function deleteMaintenance(equipmentName, index) {
+            if (confirm('Are you sure you want to delete this maintenance entry?')) {
+                equipmentData[equipmentName].maintenance.splice(index, 1);
+                saveData();
+            }
+        }
+
+        function editProperty(oldName) {
+            const current = propertyData[oldName];
+            const newName = prompt('Enter new property name:', oldName);
+            const newDescription = prompt('Edit description:', current.description);
+            const newValue = parseFloat(prompt('Edit value:', current.value));
+
+            if (newName && newDescription && !isNaN(newValue) && 
+                (newName !== oldName || newDescription !== current.description || newValue !== current.value)) {
+                if (!propertyData[newName] || newName === oldName) {
+                    delete propertyData[oldName];
+                    propertyData[newName] = { description: newDescription, value: newValue };
+                    saveData();
+                } else {
+                    alert('That name is already in use.');
+                }
+            }
+        }
+
+        function deleteProperty(name) {
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                delete propertyData[name];
+                saveData();
+            }
+        }
+
+        function editDebt(oldName) {
+            const current = debtData[oldName];
+            const newName = prompt('Enter new debt name:', oldName);
+            const newDescription = prompt('Edit description:', current.description);
+            const newValue = parseFloat(prompt('Edit amount owed:', current.value));
+
+            if (newName && newDescription && !isNaN(newValue) && 
+                (newName !== oldName || newDescription !== current.description || newValue !== current.value)) {
+                if (!debtData[newName] || newName === oldName) {
+                    delete debtData[oldName];
+                    debtData[newName] = { description: newDescription, value: newValue };
+                    saveData();
+                } else {
+                    alert('That name is already in use.');
+                }
+            }
+        }
+
+        function deleteDebt(name) {
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                delete debtData[name];
+                saveData();
+            }
+        }
+
+        function editAsset(oldName) {
+            const current = assetData[oldName];
+            const newName = prompt('Enter new asset name:', oldName);
+            const newDescription = prompt('Edit description:', current.description);
+            const newValue = parseFloat(prompt('Edit value:', current.value));
+
+            if (newName && newDescription && !isNaN(newValue) && 
+                (newName !== oldName || newDescription !== current.description || newValue !== current.value)) {
+                if (!assetData[newName] || newName === oldName) {
+                    delete assetData[oldName];
+                    assetData[newName] = { description: newDescription, value: newValue };
+                    saveData();
+                } else {
+                    alert('That name is already in use.');
+                }
+            }
+        }
+
+        function deleteAsset(name) {
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                delete assetData[name];
+                saveData();
+            }
+        }
+
+        function editStock(oldName) {
+            const current = stockData[oldName];
+            const newName = prompt('Enter new stock name:', oldName);
+            const newShares = parseFloat(prompt('Edit shares:', current.shares));
+            const newPrice = parseFloat(prompt('Edit price per share:', current.price));
+
+            if (newName && !isNaN(newShares) && !isNaN(newPrice) && newShares > 0 && newPrice > 0 && 
+                (newName !== oldName || newShares !== current.shares || newPrice !== current.price)) {
+                if (!stockData[newName] || newName === oldName) {
+                    delete stockData[oldName];
+                    stockData[newName] = { shares: newShares, price: newPrice, totalValue: newShares * newPrice };
+                    saveData();
+                } else {
+                    alert('That name is already in use.');
+                }
+            }
+        }
+
+        function deleteStock(name) {
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                delete stockData[name];
+                saveData();
+            }
+        }
+
+        function editInsurance(oldName) {
+            const current = insuranceData[oldName];
+            const newName = prompt('Enter new insurance name:', oldName);
+            const newMonthly = parseFloat(prompt('Edit monthly investment:', current.monthly));
+            const newCashValue = parseFloat(prompt('Edit cash value:', current.cashValue));
+            const newLoaned = parseFloat(prompt('Edit loaned amount:', current.loaned));
+            const newAvailable = parseFloat(prompt('Edit available loan amount:', current.available));
+            const newDeathBenefit = parseFloat(prompt('Edit death benefit:', current.deathBenefit));
+
+            if (newName && !isNaN(newMonthly) && !isNaN(newCashValue) && !isNaN(newLoaned) && !isNaN(newAvailable) && !isNaN(newDeathBenefit) && 
+                newMonthly >= 0 && newCashValue >= 0 && newLoaned >= 0 && newAvailable >= 0 && newDeathBenefit >= 0 && 
+                (newName !== oldName || newMonthly !== current.monthly || newCashValue !== current.cashValue || 
+                 newLoaned !== current.loaned || newAvailable !== current.available || newDeathBenefit !== current.deathBenefit)) {
+                if (!insuranceData[newName] || newName === oldName) {
+                    delete insuranceData[oldName];
+                    insuranceData[newName] = { monthly: newMonthly, cashValue: newCashValue, loaned: newLoaned, available: newAvailable, deathBenefit: newDeathBenefit };
+                    saveData();
+                } else {
+                    alert('That name is already in use.');
+                }
+            }
+        }
+
+        function deleteInsurance(name) {
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                delete insuranceData[name];
+                saveData();
+            }
+        }
+
+        function editContact(oldKey) {
+            const current = contactData[oldKey];
+            const newCategory = prompt('Edit category:', current.category);
+            const newName = prompt('Edit name:', current.name);
+            const newContactInfo = prompt('Edit contact info:', current.contactInfo);
+            const newDescription = prompt('Edit description:', current.description);
+
+            if (newCategory && newName && newContactInfo && newDescription && 
+                (newCategory !== current.category || newName !== current.name || newContactInfo !== current.contactInfo || newDescription !== current.description)) {
+                const newKey = `${newCategory}-${newName}`;
+                if (!contactData[newKey] || newKey === oldKey) {
+                    delete contactData[oldKey];
+                    contactData[newKey] = { category: newCategory, name: newName, contactInfo: newContactInfo, description: newDescription };
+                    saveData();
+                } else {
+                    alert('That name is already in use for this category.');
+                }
+            }
+        }
+
+        function deleteContact(key) {
+            if (confirm(`Are you sure you want to delete "${contactData[key].name}" from "${contactData[key].category}"?`)) {
+                delete contactData[key];
+                saveData();
+            }
+        }
+
+        function editWill(oldTitle) {
+            const current = willData[oldTitle];
+            const newTitle = prompt('Edit title:', oldTitle);
+            const newDescription = prompt('Edit description:', current.description);
+
+            if (newTitle && newDescription && 
+                (newTitle !== oldTitle || newDescription !== current.description)) {
+                if (!willData[newTitle] || newTitle === oldTitle) {
+                    delete willData[oldTitle];
+                    willData[newTitle] = { description: newDescription };
+                    saveData();
+                } else {
+                    alert('That title is already in use.');
+                }
+            }
+        }
+
+        function deleteWill(title) {
+            if (confirm(`Are you sure you want to delete "${title}"?`)) {
+                delete willData[title];
+                saveData();
+            }
+        }
+
+        function displayEquipment() {
+            const display = document.getElementById('equipmentDisplay');
+            display.innerHTML = '';
+
+            for (const [name, data] of Object.entries(equipmentData)) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'equipment-item';
+
+                let maintenanceHtml = '';
+                (data.maintenance || []).forEach((entry, index) => {
+                    maintenanceHtml += `
+                        <div class="maintenance-entry">
+                            ${entry.date || 'N/A'} - ${entry.details || 'N/A'}
+                            ${entry.photo ? `<img src="${entry.photo}" alt="Maintenance Photo">` : ''}
+                            <button class="action-btn" onclick="editMaintenance('${name}', ${index})">Edit</button>
+                            <button class="action-btn delete" onclick="deleteMaintenance('${name}', ${index})">Delete</button>
+                        </div>
+                    `;
+                });
+
+                const make = data.make || 'N/A';
+                const model = data.model || 'N/A';
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+
+                itemDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <p>Make: ${make}</p>
+                    <p>Model: ${model}</p>
+                    <p>Value: $${value}</p>
+                    <button class="action-btn" onclick="editEquipment('${name}')">Edit</button>
+                    <button class="action-btn delete" onclick="deleteEquipment('${name}')">Delete</button>
+                    <div>
+                        <strong>Maintenance History:</strong>
+                        ${maintenanceHtml || '<p>No maintenance recorded yet.</p>'}
+                    </div>
+                `;
+                display.appendChild(itemDiv);
+            }
+        }
+
+        function displayProperty() {
+            const display = document.getElementById('propertyDisplay');
+            display.innerHTML = '';
+
+            for (const [name, data] of Object.entries(propertyData)) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'property-item';
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+                itemDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <p>Description: ${data.description || 'N/A'}</p>
+                    <p>Value: $${value}</p>
+                    <button class="action-btn" onclick="editProperty('${name}')">Edit</button>
+                    <button class="action-btn delete" onclick="deleteProperty('${name}')">Delete</button>
+                `;
+                display.appendChild(itemDiv);
+            }
+        }
+
+        function displayDebt() {
+            const display = document.getElementById('debtDisplay');
+            display.innerHTML = '';
+
+            for (const [name, data] of Object.entries(debtData)) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'debt-item';
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+                itemDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <p>Description: ${data.description || 'N/A'}</p>
+                    <p>Amount Owed: $${value}</p>
+                    <button class="action-btn" onclick="editDebt('${name}')">Edit</button>
+                    <button class="action-btn delete" onclick="deleteDebt('${name}')">Delete</button>
+                `;
+                display.appendChild(itemDiv);
+            }
+        }
+
+        function displayAssets() {
+            const display = document.getElementById('assetDisplay');
+            display.innerHTML = '';
+
+            for (const [name, data] of Object.entries(assetData)) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'asset-item';
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+                itemDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <p>Description: ${data.description || 'N/A'}</p>
+                    <p>Value: $${value}</p>
+                    <button class="action-btn" onclick="editAsset('${name}')">Edit</button>
+                    <button class="action-btn delete" onclick="deleteAsset('${name}')">Delete</button>
+                `;
+                display.appendChild(itemDiv);
+            }
+        }
+
+        function displayStocks() {
+            const display = document.getElementById('stockDisplay');
+            display.innerHTML = '';
+
+            for (const [name, data] of Object.entries(stockData)) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'stock-item';
+                const shares = data.shares !== undefined ? data.shares.toFixed(2) : 'N/A';
+                const price = data.price !== undefined ? data.price.toFixed(2) : 'N/A';
+                const totalValue = data.totalValue !== undefined ? data.totalValue.toFixed(2) : 'N/A';
+                itemDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <p>Shares: ${shares}</p>
+                    <p>Price per Share: $${price}</p>
+                    <p>Total Value: $${totalValue}</p>
+                    <button class="action-btn" onclick="editStock('${name}')">Edit</button>
+                    <button class="action-btn delete" onclick="deleteStock('${name}')">Delete</button>
+                `;
+                display.appendChild(itemDiv);
+            }
+        }
+
+        function displayInsurances() {
+            const display = document.getElementById('insuranceDisplay');
+            display.innerHTML = '';
+
+            for (const [name, data] of Object.entries(insuranceData)) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'insurance-item';
+                const monthly = data.monthly !== undefined ? data.monthly.toFixed(2) : 'N/A';
+                const cashValue = data.cashValue !== undefined ? data.cashValue.toFixed(2) : 'N/A';
+                const loaned = data.loaned !== undefined ? data.loaned.toFixed(2) : 'N/A';
+                const available = data.available !== undefined ? data.available.toFixed(2) : 'N/A';
+                const deathBenefit = data.deathBenefit !== undefined ? data.deathBenefit.toFixed(2) : 'N/A';
+                itemDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <p>Monthly Investment: $${monthly}</p>
+                    <p>Cash Value: $${cashValue}</p>
+                    <p>Loaned Amount: $${loaned}</p>
+                    <p>Available Loan Amount: $${available}</p>
+                    <p>Death Benefit: $${deathBenefit}</p>
+                    <button class="action-btn" onclick="editInsurance('${name}')">Edit</button>
+                    <button class="action-btn delete" onclick="deleteInsurance('${name}')">Delete</button>
+                `;
+                display.appendChild(itemDiv);
+            }
+        }
+
+        function displayContacts() {
+            const display = document.getElementById('contactDisplay');
+            display.innerHTML = '';
+
+            const categories = {};
+            for (const [key, data] of Object.entries(contactData)) {
+                if (!categories[data.category]) {
+                    categories[data.category] = [];
+                }
+                categories[data.category].push({ key, ...data });
+            }
+
+            for (const [category, contacts] of Object.entries(categories)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.innerHTML = `<h3>${category}</h3>`;
+                contacts.forEach(contact => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'contact-item';
+                    itemDiv.innerHTML = `
+                        <p>Name: ${contact.name || 'N/A'}</p>
+                        <p>Contact Info: ${contact.contactInfo || 'N/A'}</p>
+                        <p>Description: ${contact.description || 'N/A'}</p>
+                        <button class="action-btn" onclick="editContact('${contact.key}')">Edit</button>
+                        <button class="action-btn delete" onclick="deleteContact('${contact.key}')">Delete</button>
+                    `;
+                    categoryDiv.appendChild(itemDiv);
+                });
+                display.appendChild(categoryDiv);
+            }
+        }
+
+        function displayWills() {
+            const display = document.getElementById('willDisplay');
+            display.innerHTML = '';
+
+            for (const [title, data] of Object.entries(willData)) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'will-item';
+                itemDiv.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>Description: ${data.description || 'N/A'}</p>
+                    <button class="action-btn" onclick="editWill('${title}')">Edit</button>
+                    <button class="action-btn delete" onclick="deleteWill('${title}')">Delete</button>
+                `;
+                display.appendChild(itemDiv);
+            }
+        }
+
+        async function exportToPDF() {
+            if (!token) {
+                alert('Please log in to export your data.');
+                return;
+            }
+            const doc = new jsPDF();
+            let yOffset = 10;
+
+            doc.setFontSize(20);
+            doc.text('Life Tracker', 105, yOffset, { align: 'center' });
+            yOffset += 20;
+
+            doc.setFontSize(16);
+            doc.text('Financial Summary', 10, yOffset);
+            yOffset += 10;
+            const { totalAssets, totalDebt, netWorth } = calculateTotals();
+            doc.setFontSize(12);
+            doc.text(`Total Assets Value: $${totalAssets.toFixed(2)}`, 10, yOffset);
+            yOffset += 7;
+            doc.text(`Total Debt Value: $${totalDebt.toFixed(2)}`, 10, yOffset);
+            yOffset += 7;
+            doc.text(`Net Worth: $${netWorth.toFixed(2)}`, 10, yOffset);
+            yOffset += 10;
+
+            doc.setFontSize(16);
+            doc.text('Equipment', 10, yOffset);
+            yOffset += 10;
+
+            for (const [name, data] of Object.entries(equipmentData)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(14);
+                const make = data.make || 'N/A';
+                const model = data.model || 'N/A';
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+                const equipmentText = `${name}\nMake: ${make}\nModel: ${model}\nValue: $${value}`;
+                const equipmentSplit = doc.splitTextToSize(equipmentText, 180);
+                doc.text(equipmentSplit, 10, yOffset);
+                yOffset += equipmentSplit.length * 7;
+
+                for (const entry of (data.maintenance || [])) {
+                    if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                    doc.setFontSize(10);
+                    const text = `${entry.date || 'N/A'} - ${entry.details || 'N/A'}`;
+                    const splitText = doc.splitTextToSize(text, 180);
+                    doc.text(splitText, 10, yOffset);
+                    yOffset += splitText.length * 5;
+
+                    if (entry.photo) {
+                        if (yOffset > 250) { doc.addPage(); yOffset = 10; }
+                        try {
+                            const imgProps = doc.getImageProperties(entry.photo);
+                            const imgHeight = 30;
+                            const imgWidth = (imgProps.width / imgProps.height) * imgHeight;
+                            doc.addImage(entry.photo, 'JPEG', 10, yOffset, imgWidth, imgHeight);
+                            yOffset += imgHeight + 5;
+                        } catch (e) { console.error('Error adding image:', e); }
+                    }
+                }
+                yOffset += 10;
+            }
+
+            if (yOffset > 260) { doc.addPage(); yOffset = 10; }
+            doc.setFontSize(16);
+            doc.text('Personal Property', 10, yOffset);
+            yOffset += 10;
+
+            for (const [name, data] of Object.entries(propertyData)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(12);
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+                const propertyText = `${name}\nDescription: ${data.description || 'N/A'}\nValue: $${value}`;
+                const splitText = doc.splitTextToSize(propertyText, 180);
+                doc.text(splitText, 10, yOffset);
+                yOffset += splitText.length * 7 + 5;
+            }
+
+            if (yOffset > 260) { doc.addPage(); yOffset = 10; }
+            doc.setFontSize(16);
+            doc.text('Debt', 10, yOffset);
+            yOffset += 10;
+
+            for (const [name, data] of Object.entries(debtData)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(12);
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+                const debtText = `${name}\nDescription: ${data.description || 'N/A'}\nAmount Owed: $${value}`;
+                const splitText = doc.splitTextToSize(debtText, 180);
+                doc.text(splitText, 10, yOffset);
+                yOffset += splitText.length * 7 + 5;
+            }
+
+            if (yOffset > 260) { doc.addPage(); yOffset = 10; }
+            doc.setFontSize(16);
+            doc.text('Assets', 10, yOffset);
+            yOffset += 10;
+
+            for (const [name, data] of Object.entries(assetData)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(12);
+                const value = data.value !== undefined ? data.value.toFixed(2) : 'N/A';
+                const assetText = `${name}\nDescription: ${data.description || 'N/A'}\nValue: $${value}`;
+                const splitText = doc.splitTextToSize(assetText, 180);
+                doc.text(splitText, 10, yOffset);
+                yOffset += splitText.length * 7 + 5;
+            }
+
+            if (yOffset > 260) { doc.addPage(); yOffset = 10; }
+            doc.setFontSize(16);
+            doc.text('Stocks', 10, yOffset);
+            yOffset += 10;
+
+            for (const [name, data] of Object.entries(stockData)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(12);
+                const shares = data.shares !== undefined ? data.shares.toFixed(2) : 'N/A';
+                const price = data.price !== undefined ? data.price.toFixed(2) : 'N/A';
+                const totalValue = data.totalValue !== undefined ? data.totalValue.toFixed(2) : 'N/A';
+                const stockText = `${name}\nShares: ${shares}\nPrice per Share: $${price}\nTotal Value: $${totalValue}`;
+                const splitText = doc.splitTextToSize(stockText, 180);
+                doc.text(splitText, 10, yOffset);
+                yOffset += splitText.length * 7 + 5;
+            }
+
+            if (yOffset > 260) { doc.addPage(); yOffset = 10; }
+            doc.setFontSize(16);
+            doc.text('Life Insurances', 10, yOffset);
+            yOffset += 10;
+
+            for (const [name, data] of Object.entries(insuranceData)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(12);
+                const monthly = data.monthly !== undefined ? data.monthly.toFixed(2) : 'N/A';
+                const cashValue = data.cashValue !== undefined ? data.cashValue.toFixed(2) : 'N/A';
+                const loaned = data.loaned !== undefined ? data.loaned.toFixed(2) : 'N/A';
+                const available = data.available !== undefined ? data.available.toFixed(2) : 'N/A';
+                const deathBenefit = data.deathBenefit !== undefined ? data.deathBenefit.toFixed(2) : 'N/A';
+                const insuranceText = `${name}\nMonthly Investment: $${monthly}\nCash Value: $${cashValue}\nLoaned Amount: $${loaned}\nAvailable Loan Amount: $${available}\nDeath Benefit: $${deathBenefit}`;
+                const splitText = doc.splitTextToSize(insuranceText, 180);
+                doc.text(splitText, 10, yOffset);
+                yOffset += splitText.length * 7 + 5;
+            }
+
+            if (yOffset > 260) { doc.addPage(); yOffset = 10; }
+            doc.setFontSize(16);
+            doc.text('Important Contacts', 10, yOffset);
+            yOffset += 10;
+
+            const contactCategories = {};
+            for (const [key, data] of Object.entries(contactData)) {
+                if (!contactCategories[data.category]) contactCategories[data.category] = [];
+                contactCategories[data.category].push(data);
+            }
+
+            for (const [category, contacts] of Object.entries(contactCategories)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(14);
+                doc.text(category, 10, yOffset);
+                yOffset += 7;
+
+                for (const contact of contacts) {
+                    if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                    doc.setFontSize(12);
+                    const contactText = `Name: ${contact.name || 'N/A'}\nContact Info: ${contact.contactInfo || 'N/A'}\nDescription: ${contact.description || 'N/A'}`;
+                    const splitText = doc.splitTextToSize(contactText, 180);
+                    doc.text(splitText, 10, yOffset);
+                    yOffset += splitText.length * 7 + 5;
+                }
+            }
+
+            if (yOffset > 260) { doc.addPage(); yOffset = 10; }
+            doc.setFontSize(16);
+            doc.text('A Brief Will and Desires Upon Death', 10, yOffset);
+            yOffset += 10;
+
+            for (const [title, data] of Object.entries(willData)) {
+                if (yOffset > 280) { doc.addPage(); yOffset = 10; }
+                doc.setFontSize(12);
+                const willText = `${title}\nDescription: ${data.description || 'N/A'}`;
+                const splitText = doc.splitTextToSize(willText, 180);
+                doc.text(splitText, 10, yOffset);
+                yOffset += splitText.length * 7 + 5;
+            }
+
+            doc.save('Life_Tracker.pdf');
+        }
+    </script>
+</body>
+</html>
